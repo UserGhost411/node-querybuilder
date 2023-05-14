@@ -59,7 +59,7 @@ class QueryExec extends QueryBuilder {
                     if(err) return reject(new Error(err));
                     return resolve(row[0].numrows);
                 } else if (cb && typeof cb === 'function') {
-                    return cb(err?err:row[0].numrows);
+                    return cb(err,row[0].numrows);
                 } else {
                     throw ERRORS.NO_VALID_RESULTS_HANDLER;
                 }
