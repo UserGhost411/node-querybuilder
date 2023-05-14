@@ -53,25 +53,24 @@ class QueryExec extends QueryBuilder {
         const sql = this._count(table);
         this.reset_query(sql);
 
-        const handler = (err, row) => {
-            if (!err) {
-                if (typeof callback !== "function") {
-                    this.resolve(row[0].numrows);
-                    return;
+        const handler = (resolve, reject) => {
+            this._exec(sql, (err, row) => {
+                if ((!cb || typeof cb !== 'function') && (typeof resolve === 'function' && typeof reject === 'function')) {
+                    if(err) return reject(new Error(err));
+                    return resolve(row[0].numrows);
+                } else if (cb && typeof cb === 'function') {
+                    return cb(err?err:row[0].numrows);
+                } else {
+                    throw ERRORS.NO_VALID_RESULTS_HANDLER;
                 }
-                cb(err, row[0].numrows);
-            }
-            else {
-                if (typeof callback !== "function") {
-                    this.reject(err);
-                    return;
-                }
-                cb(err, row);
-            }
+            });
+            
         }
-
-        if (typeof cb !== "function") return new WrapperPromise(sql, this._exec.bind(this), handler).promisify();
-        this._exec(sql, handler);
+        if (!cb || cb !== 'function') {
+            return new Promise(handler);
+        } else {
+            handler();
+        }
     }
 
     get(table, cb, conn) {
